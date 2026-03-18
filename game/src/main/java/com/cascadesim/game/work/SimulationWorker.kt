@@ -76,7 +76,7 @@ class SimulationWorker @AssistedInject constructor(
         val randomDecision = Decision(
             id = "background_event_${System.currentTimeMillis()}_$tickIndex",
             type = decisionTypes[Random.nextInt(decisionTypes.size)],
-            impactScore = (0.2f..0.6f).random(),
+            impactScore = 0.2f + Random.nextFloat() * 0.4f,
             targetEntityId = null,
             metadata = mapOf("source" to "background_simulation")
         )
