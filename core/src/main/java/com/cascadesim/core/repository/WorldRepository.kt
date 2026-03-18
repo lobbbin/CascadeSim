@@ -1,13 +1,21 @@
 // FIX: PHASE 4 - Fixed getWorldStateFlow to properly combine data sources
 // FIX: PHASE 4 - Added checkpoint save/load system
+// PHASE 6: Added background simulation scheduling with WorkManager
 
 package com.cascadesim.core.repository
 
+import android.content.Context
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.cascadesim.core.db.dao.WorldDao
 import com.cascadesim.core.db.entity.CountryEntity
 import com.cascadesim.core.db.entity.EventEntity
 import com.cascadesim.core.db.entity.NpcEntity
 import com.cascadesim.core.util.Result
+import com.cascadesim.core.work.SimulationWorker
 import com.cascadesim.game.engine.CascadeEngine
 import com.cascadesim.game.engine.EventSink
 import com.cascadesim.game.model.Decision
@@ -22,6 +30,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -356,5 +365,38 @@ class WorldRepository @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * PHASE 6: Schedules background simulation using WorkManager.
+     * Runs every 15 minutes to simulate events while app is closed.
+     */
+    fun scheduleBackgroundSim(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.NOT_REQUIRED) // Works offline
+            .setRequiresBatteryNotLow(false) // Runs even on low battery
+            .setRequiresCharging(false)
+            .build()
+
+        val workRequest = PeriodicWorkRequestBuilder<SimulationWorker>(
+            repeatInterval = 15,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES
+        )
+            .setConstraints(constraints)
+            .addTag(SimulationWorker.WORK_NAME)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            SimulationWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+
+    /**
+     * PHASE 6: Cancels background simulation.
+     */
+    fun cancelBackgroundSim(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(SimulationWorker.WORK_NAME)
     }
 }

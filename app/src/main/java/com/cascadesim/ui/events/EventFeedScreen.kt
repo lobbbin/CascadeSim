@@ -1,4 +1,5 @@
 // PHASE 5: Animated Event Feed with slide-in, fade, expandable cards, and severity colors
+// PHASE 6: Added derivedStateOf for performance optimization
 
 package com.cascadesim.ui.events
 
@@ -153,23 +154,27 @@ private fun EventFeedContent(
 
 /**
  * PHASE 5: Animated event card with slide-in and fade effects
+ * PHASE 6: Using derivedStateOf for expensive color calculations
  */
 @Composable
 private fun AnimatedEventCard(event: EventUiModel) {
     var expanded by remember { mutableStateOf(false) }
     val hapticFeedback = LocalHapticFeedback.current
-    
-    val severityColor = when (event.severity) {
-        EventSeverity.LOW -> EventSeverityLow
-        EventSeverity.MEDIUM -> EventSeverityMedium
-        EventSeverity.HIGH -> EventSeverityHigh
-        EventSeverity.CRITICAL -> EventSeverityCritical
-        EventSeverity.CATASTROPHIC -> EventSeverityCatastrophic
+
+    // PHASE 6: Using derivedStateOf for expensive severity color calculation
+    val severityColor: Color by derivedStateOf {
+        when (event.severity) {
+            EventSeverity.LOW -> EventSeverityLow
+            EventSeverity.MEDIUM -> EventSeverityMedium
+            EventSeverity.HIGH -> EventSeverityHigh
+            EventSeverity.CRITICAL -> EventSeverityCritical
+            EventSeverity.CATASTROPHIC -> EventSeverityCatastrophic
+        }
     }
-    
+
     val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     val timeString = timeFormat.format(Date(event.timestamp))
-    
+
     // Pulse animation for high severity events
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -181,13 +186,16 @@ private fun AnimatedEventCard(event: EventUiModel) {
         ),
         label = "pulseAlpha"
     )
-    
-    val containerColor = if (event.isHighSeverity) {
-        severityColor.copy(alpha = pulseAlpha)
-    } else {
-        MaterialTheme.colorScheme.surface
+
+    // PHASE 6: Using derivedStateOf for container color
+    val containerColor by derivedStateOf {
+        if (event.isHighSeverity) {
+            severityColor.copy(alpha = pulseAlpha)
+        } else {
+            MaterialTheme.colorScheme.surface
+        }
     }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
