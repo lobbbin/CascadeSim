@@ -1,18 +1,30 @@
+// PHASE 5: Animated Event Feed with slide-in, fade, expandable cards, and severity colors
+
 package com.cascadesim.ui.events
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,8 +58,9 @@ fun EventFeedScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-                        // Scroll to top
-                        listState.animateScrollToItem(0)
+                        if (listState.layoutInfo.totalItemsCount > 0) {
+                            listState.animateScrollToItem(0)
+                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
@@ -66,7 +79,7 @@ fun EventFeedScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = CascadePrimary)
                 }
             }
             is UiState.Success -> {
@@ -123,11 +136,165 @@ private fun EventFeedContent(
         
         if (events.isEmpty()) {
             item {
-                EmptyEventsMessage()
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { -20 })
+                ) {
+                    EmptyEventsMessage()
+                }
             }
         } else {
             items(events, key = { it.id }) { event ->
-                EventCard(event = event)
+                AnimatedEventCard(event = event)
+            }
+        }
+    }
+}
+
+/**
+ * PHASE 5: Animated event card with slide-in and fade effects
+ */
+@Composable
+private fun AnimatedEventCard(event: EventUiModel) {
+    var expanded by remember { mutableStateOf(false) }
+    val hapticFeedback = LocalHapticFeedback.current
+    
+    val severityColor = when (event.severity) {
+        EventSeverity.LOW -> EventSeverityLow
+        EventSeverity.MEDIUM -> EventSeverityMedium
+        EventSeverity.HIGH -> EventSeverityHigh
+        EventSeverity.CRITICAL -> EventSeverityCritical
+        EventSeverity.CATASTROPHIC -> EventSeverityCatastrophic
+    }
+    
+    val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    val timeString = timeFormat.format(Date(event.timestamp))
+    
+    // Pulse animation for high severity events
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.1f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+    
+    val containerColor = if (event.isHighSeverity) {
+        severityColor.copy(alpha = pulseAlpha)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateItemPlacement(),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        ),
+        onClick = {
+            hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+            expanded = !expanded
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SeverityBadge(severity = event.severity, color = severityColor)
+                Text(
+                    text = timeString,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = event.description,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (event.isHighSeverity) severityColor else MaterialTheme.colorScheme.onSurface
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Chain: ${event.chainId.take(8)}...",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            // PHASE 5: Expandable cascade chain visualization
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Text(
+                    text = "Cascade Details",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = CascadePrimary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                // Placeholder for cascade chain - would connect to EventChainVisualizer
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Severity Score",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = when (event.severity) {
+                                EventSeverity.LOW -> "Low impact"
+                                EventSeverity.MEDIUM -> "Moderate impact"
+                                EventSeverity.HIGH -> "High impact"
+                                EventSeverity.CRITICAL -> "Critical impact"
+                                EventSeverity.CATASTROPHIC -> "Catastrophic impact"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = severityColor
+                        )
+                    }
+                }
             }
         }
     }
@@ -170,90 +337,6 @@ private fun EmptyEventsMessage() {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-private fun EventCard(event: EventUiModel) {
-    val severityColor = when (event.severity) {
-        EventSeverity.LOW -> EventSeverityLow
-        EventSeverity.MEDIUM -> EventSeverityMedium
-        EventSeverity.HIGH -> EventSeverityHigh
-        EventSeverity.CRITICAL -> EventSeverityCritical
-        EventSeverity.CATASTROPHIC -> EventSeverityCatastrophic
-    }
-    
-    val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-    val timeString = timeFormat.format(Date(event.timestamp))
-    
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (event.isHighSeverity) {
-                severityColor.copy(alpha = 0.05f)
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SeverityBadge(severity = event.severity, color = severityColor)
-                Text(
-                    text = timeString,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = event.description,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (event.isHighSeverity) {
-                    severityColor
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Chain: ${event.chainId.take(8)}...",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                if (event.isHighSeverity) {
-                    Surface(
-                        color = severityColor.copy(alpha = 0.1f),
-                        shape = MaterialTheme.shapes.extraSmall
-                    ) {
-                        Text(
-                            text = "HIGH IMPACT",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = severityColor,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
         }
     }
 }

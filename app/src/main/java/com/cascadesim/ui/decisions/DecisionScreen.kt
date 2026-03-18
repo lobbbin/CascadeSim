@@ -1,28 +1,40 @@
+// PHASE 5: Interactive DecisionScreen with haptic feedback, draggable cards, and impact preview
+
 package com.cascadesim.ui.decisions
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cascadesim.MainActivityViewModel
 import com.cascadesim.game.model.Decision
 import com.cascadesim.game.model.DecisionType
 import com.cascadesim.ui.model.UiState
-import com.cascadesim.ui.theme.CascadePrimary
-import com.cascadesim.ui.theme.CrisisRed
-import com.cascadesim.ui.theme.StabilityGreen
-import com.cascadesim.ui.theme.WarningOrange
+import com.cascadesim.ui.theme.*
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.math.abs
 
 @Composable
 fun DecisionScreen(
@@ -31,6 +43,8 @@ fun DecisionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
+    
+    var showImpactPreview by remember { mutableStateOf<Decision?>(null) }
     
     Scaffold(
         topBar = {
@@ -55,13 +69,16 @@ fun DecisionScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = CascadePrimary)
                 }
             }
-            is UiState.Success -> {
+            is UiState.Success, is UiState.Error -> {
                 DecisionContent(
-                    isLoading = false,
-                    onDecisionMade = { decision ->
+                    isLoading = state is UiState.Loading,
+                    onDecisionSelected = { decision ->
+                        showImpactPreview = decision
+                    },
+                    onDecisionConfirmed = { decision ->
                         scope.launch {
                             viewModel.onDecisionMade(decision)
                         }
@@ -69,27 +86,29 @@ fun DecisionScreen(
                     modifier = Modifier.padding(paddingValues)
                 )
             }
-            is UiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = state.message,
-                        color = CrisisRed
-                    )
-                }
-            }
         }
+    }
+    
+    // PHASE 5: Impact Preview Dialog
+    showImpactPreview?.let { decision ->
+        DecisionImpactPreviewDialog(
+            decision = decision,
+            onConfirm = {
+                viewModel.onDecisionMade(decision)
+                showImpactPreview = null
+            },
+            onDismiss = {
+                showImpactPreview = null
+            }
+        )
     }
 }
 
 @Composable
 private fun DecisionContent(
     isLoading: Boolean,
-    onDecisionMade: (Decision) -> Unit,
+    onDecisionSelected: (Decision) -> Unit,
+    onDecisionConfirmed: (Decision) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -111,10 +130,10 @@ private fun DecisionContent(
             SectionHeader(title = "Diplomatic")
         }
         items(getDiplomaticDecisions()) { decision ->
-            DecisionCard(
+            InteractiveDecisionCard(
                 decision = decision,
                 enabled = !isLoading,
-                onClick = { onDecisionMade(decision) }
+                onClick = { onDecisionSelected(decision) }
             )
         }
         
@@ -123,10 +142,10 @@ private fun DecisionContent(
             SectionHeader(title = "Economic")
         }
         items(getEconomicDecisions()) { decision ->
-            DecisionCard(
+            InteractiveDecisionCard(
                 decision = decision,
                 enabled = !isLoading,
-                onClick = { onDecisionMade(decision) }
+                onClick = { onDecisionSelected(decision) }
             )
         }
         
@@ -135,10 +154,10 @@ private fun DecisionContent(
             SectionHeader(title = "Military")
         }
         items(getMilitaryDecisions()) { decision ->
-            DecisionCard(
+            InteractiveDecisionCard(
                 decision = decision,
                 enabled = !isLoading,
-                onClick = { onDecisionMade(decision) }
+                onClick = { onDecisionSelected(decision) }
             )
         }
         
@@ -147,10 +166,10 @@ private fun DecisionContent(
             SectionHeader(title = "Social")
         }
         items(getSocialDecisions()) { decision ->
-            DecisionCard(
+            InteractiveDecisionCard(
                 decision = decision,
                 enabled = !isLoading,
-                onClick = { onDecisionMade(decision) }
+                onClick = { onDecisionSelected(decision) }
             )
         }
         
@@ -159,42 +178,63 @@ private fun DecisionContent(
             SectionHeader(title = "Environmental")
         }
         items(getEnvironmentalDecisions()) { decision ->
-            DecisionCard(
+            InteractiveDecisionCard(
                 decision = decision,
                 enabled = !isLoading,
-                onClick = { onDecisionMade(decision) }
+                onClick = { onDecisionSelected(decision) }
             )
         }
     }
 }
 
+/**
+ * PHASE 5: Interactive decision card with swipe gesture and haptic feedback
+ */
 @Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
-}
-
-@Composable
-private fun DecisionCard(
+private fun InteractiveDecisionCard(
     decision: Decision,
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    var offsetX by remember { mutableStateOf(0f) }
+    var isSwiped by remember { mutableStateOf(false) }
+    
     val impactColor = when {
         decision.impactScore >= 0.7f -> CrisisRed
         decision.impactScore >= 0.4f -> WarningOrange
         else -> StabilityGreen
     }
     
+    val cardModifier = Modifier
+        .fillMaxWidth()
+        .graphicsLayer {
+            translationX = offsetX
+            rotationZ = offsetX * 0.05f
+        }
+        .pointerInput(Unit) {
+            detectHorizontalDragGestures(
+                onDragEnd = {
+                    if (abs(offsetX) > 100f && enabled) {
+                        hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+                        onClick()
+                    }
+                    offsetX = 0f
+                    isSwiped = false
+                },
+                onHorizontalDrag = { change, dragAmount ->
+                    if (enabled) {
+                        offsetX += dragAmount
+                        isSwiped = abs(offsetX) > 50f
+                    }
+                }
+            )
+        }
+        .animateOffset()
+    
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = cardModifier,
         enabled = enabled,
-        onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = if (enabled) {
                 MaterialTheme.colorScheme.surface
@@ -230,8 +270,35 @@ private fun DecisionCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // PHASE 5: Swipe hint
+            AnimatedVisibility(
+                visible = !isSwiped && enabled,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Swipe or tap to preview impact",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
             if (decision.metadata.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 decision.metadata.forEach { (key, value) ->
                     Text(
                         text = "$key: $value",
@@ -242,6 +309,213 @@ private fun DecisionCard(
             }
         }
     }
+}
+
+/**
+ * PHASE 5: Impact preview dialog showing predicted effects
+ */
+@Composable
+private fun DecisionImpactPreviewDialog(
+    decision: Decision,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Text(
+                    text = "Confirm Decision",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Decision info
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = decision.id,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Type",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = decision.type.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Impact Score",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "${(decision.impactScore * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = when {
+                                    decision.impactScore >= 0.7f -> CrisisRed
+                                    decision.impactScore >= 0.4f -> WarningOrange
+                                    else -> StabilityGreen
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // PHASE 5: Predicted effects
+                Text(
+                    text = "Predicted Effects",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = CascadePrimary
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                PredictedEffectsList(decision = decision)
+                
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                // Actions
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Cancel")
+                    }
+                    
+                    Button(
+                        onClick = {
+                            hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+                            onConfirm()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = CascadePrimary
+                        )
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PredictedEffectsList(decision: Decision) {
+    val effects = when (decision.type) {
+        DecisionType.DIPLOMATIC -> listOf(
+            "International relations affected",
+            "Trade agreements may change",
+            "Alliance shifts possible"
+        )
+        DecisionType.ECONOMIC -> listOf(
+            "GDP impact expected",
+            "Employment rates may shift",
+            "Market volatility possible"
+        )
+        DecisionType.MILITARY -> listOf(
+            "Defense posture changed",
+            "Regional tension may increase",
+            "Resource allocation required"
+        )
+        DecisionType.SOCIAL -> listOf(
+            "Public opinion affected",
+            "Social services impacted",
+            "Community response expected"
+        )
+        DecisionType.ENVIRONMENTAL -> listOf(
+            "Ecological impact expected",
+            "Resource consumption affected",
+            "Long-term sustainability change"
+        )
+        DecisionType.EMERGENCY -> listOf(
+            "Immediate response required",
+            "Crisis management activated",
+            "Resource reallocation needed"
+        )
+    }
+    
+    effects.forEach { effect ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(CascadePrimary)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = effect,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
 }
 
 @Composable
