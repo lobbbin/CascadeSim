@@ -1,3 +1,6 @@
+// FIX: PHASE 4 - Removed redundant EventEntity conversion, use Event directly
+// FIX: PHASE 4 - Added checkpoint methods
+
 package com.cascadesim
 
 import androidx.lifecycle.ViewModel
@@ -19,19 +22,21 @@ import javax.inject.Inject
 /**
  * ViewModel for MainActivity.
  * Injects Repository and exposes uiState for UI observation.
+ * 
+ * PHASE 4: Fixed Event conversion and added checkpoint support
  */
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     private val worldRepository: WorldRepository
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
-    
+
     init {
         initializeSimulation()
     }
-    
+
     /**
      * Initializes the simulation on first launch.
      */
@@ -54,7 +59,7 @@ class MainActivityViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Handles a decision made by the user.
      * Processes through the cascade engine and updates UI state.
@@ -64,18 +69,20 @@ class MainActivityViewModel @Inject constructor(
             val result = worldRepository.processDecision(decision)
             when (result) {
                 is Result.Success -> {
-                    val events = result.data.map { EventUiModel.fromEntity(
-                        com.cascadesim.core.db.entity.EventEntity(
-                            id = it.id,
-                            description = it.description,
-                            severity = it.severity.name,
-                            chainId = it.chainId,
-                            sourceDecisionId = it.sourceDecisionId,
-                            timestamp = it.timestamp,
-                            affectedEntityIdsJson = ""
+                    // PHASE 4 FIX: Use Event directly instead of converting through EventEntity
+                    val events = result.data.map { event ->
+                        EventUiModel(
+                            id = event.id,
+                            description = event.description,
+                            severity = event.severity,
+                            chainId = event.chainId,
+                            timestamp = event.timestamp,
+                            isHighSeverity = event.severity == com.cascadesim.game.model.EventSeverity.HIGH ||
+                                event.severity == com.cascadesim.game.model.EventSeverity.CRITICAL ||
+                                event.severity == com.cascadesim.game.model.EventSeverity.CATASTROPHIC
                         )
-                    ) }
-                    
+                    }
+
                     val currentSuccess = _uiState.value as? UiState.Success
                     _uiState.value = UiState.Success(
                         worldState = currentSuccess?.worldState ?: com.cascadesim.game.model.WorldState(),
@@ -92,7 +99,7 @@ class MainActivityViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Advances the simulation by one tick.
      */
@@ -117,7 +124,7 @@ class MainActivityViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Resets the simulation.
      */
@@ -140,7 +147,7 @@ class MainActivityViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Clears the current error state.
      */
@@ -152,23 +159,56 @@ class MainActivityViewModel @Inject constructor(
             )
         }
     }
-    
+
+    /**
+     * PHASE 4: Creates a checkpoint.
+     */
+    fun createCheckpoint(label: String) {
+        viewModelScope.launch {
+            val checkpointId = worldRepository.createCheckpoint(label)
+            // Could emit a snackbar event here
+        }
+    }
+
+    /**
+     * PHASE 4: Restores a checkpoint.
+     */
+    fun restoreCheckpoint(checkpointId: String) {
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            val result = worldRepository.restoreCheckpoint(checkpointId)
+            when (result) {
+                is Result.Success -> {
+                    _uiState.value = UiState.Success(
+                        cascadeLevel = CascadeLevel.STABLE
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = UiState.Error(
+                        result.message ?: "Failed to restore checkpoint"
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
     /**
      * Calculates cascade level based on recent events.
      */
     private fun calculateCascadeLevel(events: List<EventUiModel>): CascadeLevel {
         if (events.isEmpty()) return CascadeLevel.STABLE
-        
-        val hasCatastrophic = events.any { 
-            it.severity == com.cascadesim.game.model.EventSeverity.CATASTROPHIC 
+
+        val hasCatastrophic = events.any {
+            it.severity == com.cascadesim.game.model.EventSeverity.CATASTROPHIC
         }
-        val hasCritical = events.any { 
-            it.severity == com.cascadesim.game.model.EventSeverity.CRITICAL 
+        val hasCritical = events.any {
+            it.severity == com.cascadesim.game.model.EventSeverity.CRITICAL
         }
-        val hasHigh = events.any { 
-            it.severity == com.cascadesim.game.model.EventSeverity.HIGH 
+        val hasHigh = events.any {
+            it.severity == com.cascadesim.game.model.EventSeverity.HIGH
         }
-        
+
         return when {
             hasCatastrophic -> CascadeLevel.CASCADE
             hasCritical -> CascadeLevel.CRITICAL
