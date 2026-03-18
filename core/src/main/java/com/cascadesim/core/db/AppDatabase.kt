@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.cascadesim.core.db.converters.JsonConverters
 import com.cascadesim.core.db.dao.WorldDao
 import com.cascadesim.core.db.entity.CountryEntity
+import com.cascadesim.core.db.entity.EventEntity
 import com.cascadesim.core.db.entity.NpcEntity
 import dagger.Module
 import dagger.Provides
@@ -16,16 +19,18 @@ import javax.inject.Singleton
 
 /**
  * Room database singleton for CascadeSim.
- * Stores all persistent world state including countries and NPCs.
+ * Stores all persistent world state including countries, NPCs, and events.
  */
 @Database(
     entities = [
         CountryEntity::class,
-        NpcEntity::class
+        NpcEntity::class,
+        EventEntity::class
     ],
     version = 1,
     exportSchema = false
 )
+@TypeConverters(JsonConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     
     abstract fun worldDao(): WorldDao
@@ -69,5 +74,11 @@ object DatabaseModule {
     @Singleton
     fun provideWorldDao(database: AppDatabase): WorldDao {
         return database.worldDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideJsonConverters(): JsonConverters {
+        return JsonConverters()
     }
 }

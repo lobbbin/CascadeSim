@@ -2,6 +2,7 @@ package com.cascadesim.core.db.dao
 
 import androidx.room.*
 import com.cascadesim.core.db.entity.CountryEntity
+import com.cascadesim.core.db.entity.EventEntity
 import com.cascadesim.core.db.entity.NpcEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -35,6 +36,9 @@ interface WorldDao {
     @Query("SELECT * FROM npcs WHERE id = :id")
     suspend fun getNpcById(id: String): NpcEntity?
     
+    @Query("SELECT * FROM npcs WHERE countryId = :countryId")
+    suspend fun getNpcsByCountry(countryId: String): List<NpcEntity>
+    
     @Query("SELECT * FROM npcs")
     fun getAllNpcs(): Flow<List<NpcEntity>>
     
@@ -50,10 +54,39 @@ interface WorldDao {
     @Delete
     suspend fun deleteNpc(npc: NpcEntity)
     
+    // Event operations
+    @Query("SELECT * FROM events WHERE chainId = :chainId ORDER BY timestamp ASC")
+    suspend fun getEventsByChain(chainId: String): List<EventEntity>
+    
+    @Query("SELECT * FROM events ORDER BY timestamp DESC LIMIT :limit")
+    fun getRecentEvents(limit: Int = 50): Flow<List<EventEntity>>
+    
+    @Query("SELECT * FROM events WHERE sourceDecisionId = :decisionId")
+    suspend fun getEventsByDecision(decisionId: String): List<EventEntity>
+    
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertEvent(event: EventEntity)
+    
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertEvents(events: List<EventEntity>)
+    
+    @Delete
+    suspend fun deleteEvent(event: EventEntity)
+    
+    @Query("DELETE FROM events")
+    suspend fun deleteAllEvents()
+    
     // Utility queries
     @Query("SELECT * FROM npcs WHERE hiddenBiasScore > :threshold")
     fun getNpcsByBiasThreshold(threshold: Float): Flow<List<NpcEntity>>
     
     @Query("SELECT * FROM countries WHERE stability < :threshold")
     fun getUnstableCountries(threshold: Float): Flow<List<CountryEntity>>
+    
+    // Clear all data
+    @Query("DELETE FROM countries")
+    suspend fun deleteAllCountries()
+    
+    @Query("DELETE FROM npcs")
+    suspend fun deleteAllNpcs()
 }

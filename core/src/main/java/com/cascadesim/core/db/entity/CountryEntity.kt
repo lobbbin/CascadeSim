@@ -16,5 +16,7 @@ data class CountryEntity(
     
     val stability: Float,
     
-    val resourcesJson: String
+    val resourcesJson: String,
+    
+    val lastUpdated: Long = System.currentTimeMillis()
 )

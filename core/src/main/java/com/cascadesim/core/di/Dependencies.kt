@@ -1,6 +1,7 @@
 package com.cascadesim.core.di
 
 import com.cascadesim.game.engine.CascadeEngine
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,5 +20,11 @@ object Dependencies {
     @Singleton
     fun provideCascadeEngine(): CascadeEngine {
         return CascadeEngine()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return Gson()
     }
 }

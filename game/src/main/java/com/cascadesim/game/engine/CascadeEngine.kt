@@ -18,6 +18,14 @@ class CascadeEngine {
 
     private var currentState: WorldState = WorldState()
     private val eventChainHistory = mutableMapOf<String, MutableList<Event>>()
+    private var eventSink: EventSink? = null
+
+    /**
+     * Sets the event sink for persisting generated events.
+     */
+    fun setEventSink(sink: EventSink) {
+        this.eventSink = sink
+    }
 
     /**
      * Initializes the engine with default or provided configuration.
@@ -74,6 +82,9 @@ class CascadeEngine {
         
         // Store chain history
         eventChainHistory[chainId] = generatedEvents.toMutableList()
+        
+        // Notify event sink for persistence
+        eventSink?.onEventsGenerated(generatedEvents)
         
         generatedEvents
     }
