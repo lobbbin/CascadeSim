@@ -17,18 +17,18 @@ data class EventChain(
         if (events.isEmpty()) return 0f
 
         val severityWeights = mapOf(
-            EventSeverity.LOW to 1f,
-            EventSeverity.MEDIUM to 2f,
-            EventSeverity.HIGH to 4f,
-            EventSeverity.CRITICAL to 8f,
-            EventSeverity.CATASTROPHIC to 16f
+            EventSeverity.LOW to 1,
+            EventSeverity.MEDIUM to 2,
+            EventSeverity.HIGH to 4,
+            EventSeverity.CRITICAL to 8,
+            EventSeverity.CATASTROPHIC to 16
         )
 
         val totalWeight = events.sumOf { event ->
-            severityWeights[event.severity] ?: 1f
+            severityWeights[event.severity] ?: 1
         }
 
-        return (totalWeight / (events.size * 16f)).coerceIn(0f, 1f)
+        return (totalWeight.toFloat() / (events.size * 16f)).coerceIn(0f, 1f)
     }
 
     /**
