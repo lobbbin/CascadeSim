@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.CascadeSim" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="android:colorPrimary">@color/cascade_primary</item>
+        <item name="android:colorPrimaryVariant">@color/cascade_primary_variant</item>
+        <item name="android:colorOnPrimary">@color/cascade_on_primary</item>
+        <!-- Secondary brand color. -->
+        <item name="android:colorSecondary">@color/cascade_secondary</item>
+        <item name="android:colorSecondaryVariant">@color/cascade_secondary_variant</item>
+        <item name="android:colorOnSecondary">@color/cascade_on_secondary</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@color/cascade_primary</item>
+        <!-- Background color. -->
+        <item name="android:colorBackground">@color/cascade_background</item>
+        <item name="android:colorOnBackground">@color/cascade_on_background</item>
+        <!-- Surface color. -->
+        <item name="android:colorSurface">@color/cascade_surface</item>
+        <item name="android:colorOnSurface">@color/cascade_on_surface</item>
+    </style>
+</resources>
