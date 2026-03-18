@@ -17,6 +17,20 @@ android {
         versionName = "1.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Support all CPU architectures for Android 14 compatibility
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = false // Build universal APK with all ABIs
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
+        }
     }
 
     buildTypes {
@@ -48,13 +62,24 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    
+
     buildFeatures {
         compose = true
     }
-    
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+        }
     }
 }
 
