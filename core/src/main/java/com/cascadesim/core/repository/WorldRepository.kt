@@ -16,8 +16,8 @@ import com.cascadesim.common.model.Event
 import com.cascadesim.common.model.EventSeverity
 import com.cascadesim.common.model.WorldState
 import com.cascadesim.common.util.Result
+import com.cascadesim.common.work.WorkConstants
 import com.cascadesim.core.db.dao.WorldDao
-import com.cascadesim.game.work.SimulationWorker
 import com.cascadesim.game.engine.CascadeEngine
 import com.cascadesim.game.engine.EventSink
 import com.google.gson.Gson
@@ -260,17 +260,17 @@ class WorldRepository @Inject constructor(
             repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
             .setConstraints(constraints)
-            .addTag(SimulationWorker.WORK_NAME)
+            .addTag(WorkConstants.WORK_NAME)
             .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            SimulationWorker.WORK_NAME,
+            WorkConstants.WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
             workRequest
         )
     }
 
     fun cancelBackgroundSim(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(SimulationWorker.WORK_NAME)
+        WorkManager.getInstance(context).cancelUniqueWork(WorkConstants.WORK_NAME)
     }
 }

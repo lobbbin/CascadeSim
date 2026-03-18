@@ -10,6 +10,7 @@ import com.cascadesim.common.entity.EventEntity
 import com.cascadesim.common.model.Decision
 import com.cascadesim.common.model.DecisionType
 import com.cascadesim.common.util.Result
+import com.cascadesim.common.work.WorkConstants
 import com.cascadesim.core.db.dao.WorldDao
 import com.cascadesim.game.engine.CascadeEngine
 import com.google.gson.Gson
@@ -32,7 +33,7 @@ class SimulationWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
-        const val WORK_NAME = "cascade_simulation_worker"
+        const val WORK_NAME = WorkConstants.WORK_NAME
         private const val MAX_BACKGROUND_TICKS = 5
     }
 
