@@ -1,9 +1,8 @@
 package com.cascadesim.ui.model
 
-import com.cascadesim.core.db.entity.CountryEntity
-import com.cascadesim.core.db.entity.EventEntity
-import com.cascadesim.game.model.EventSeverity
-import com.cascadesim.game.model.WorldState
+import com.cascadesim.common.entity.CountryEntity
+import com.cascadesim.common.entity.EventEntity
+import com.cascadesim.common.model.EventSeverity
 
 /**
  * UI State representing the current state of the application.
@@ -12,7 +11,7 @@ import com.cascadesim.game.model.WorldState
 sealed class UiState {
     object Loading : UiState()
     data class Success(
-        val worldState: WorldState = WorldState(),
+        val worldState: com.cascadesim.common.model.WorldState = com.cascadesim.common.model.WorldState(),
         val countries: List<CountryUiModel> = emptyList(),
         val recentEvents: List<EventUiModel> = emptyList(),
         val cascadeLevel: CascadeLevel = CascadeLevel.STABLE
@@ -63,8 +62,8 @@ data class EventUiModel(
                 severity = severity,
                 chainId = entity.chainId,
                 timestamp = entity.timestamp,
-                isHighSeverity = severity == EventSeverity.HIGH || 
-                    severity == EventSeverity.CRITICAL || 
+                isHighSeverity = severity == EventSeverity.HIGH ||
+                    severity == EventSeverity.CRITICAL ||
                     severity == EventSeverity.CATASTROPHIC
             )
         }

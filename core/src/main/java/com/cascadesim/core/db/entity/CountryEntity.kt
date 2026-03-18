@@ -1,22 +1,12 @@
 package com.cascadesim.core.db.entity
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+// Re-export entities from common module for backward compatibility
+// This file can be removed once all references are updated
+@Deprecated("Use com.cascadesim.common.entity.CountryEntity instead", ReplaceWith("CountryEntity", "com.cascadesim.common.entity.CountryEntity"))
+typealias CountryEntity = com.cascadesim.common.entity.CountryEntity
 
-/**
- * Entity representing a country in the simulation.
- * Stores stability metrics and resource data as JSON for flexibility.
- */
-@Entity(tableName = "countries")
-data class CountryEntity(
-    @PrimaryKey
-    val id: String,
-    
-    val name: String,
-    
-    val stability: Float,
-    
-    val resourcesJson: String,
-    
-    val lastUpdated: Long = System.currentTimeMillis()
-)
+@Deprecated("Use com.cascadesim.common.entity.NpcEntity instead", ReplaceWith("NpcEntity", "com.cascadesim.common.entity.NpcEntity"))
+typealias NpcEntity = com.cascadesim.common.entity.NpcEntity
+
+@Deprecated("Use com.cascadesim.common.entity.EventEntity instead", ReplaceWith("EventEntity", "com.cascadesim.common.entity.EventEntity"))
+typealias EventEntity = com.cascadesim.common.entity.EventEntity

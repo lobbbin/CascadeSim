@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cascadesim.MainActivityViewModel
-import com.cascadesim.game.model.EventSeverity
+import com.cascadesim.common.model.EventSeverity
 import com.cascadesim.ui.model.EventUiModel
 import com.cascadesim.ui.model.UiState
 import com.cascadesim.ui.theme.*

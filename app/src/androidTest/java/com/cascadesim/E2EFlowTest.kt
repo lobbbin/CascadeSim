@@ -7,11 +7,11 @@ import androidx.compose.ui.test.*
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.cascadesim.core.db.AppDatabase
-import com.cascadesim.core.db.dao.WorldDao
-import com.cascadesim.game.engine.CascadeEngine
-import com.cascadesim.game.model.Decision
-import com.cascadesim.game.model.DecisionType
+import com.cascadesim.common.db.AppDatabase
+import com.cascadesim.common.db.dao.WorldDao
+import com.cascadesim.common.engine.CascadeEngine
+import com.cascadesim.common.model.Decision
+import com.cascadesim.common.model.DecisionType
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -129,7 +129,7 @@ class E2EFlowTest {
     @Test
     fun testDatabaseInsertAndQuery() = runBlocking {
         // Insert test country
-        val country = com.cascadesim.core.db.entity.CountryEntity(
+        val country = com.cascadesim.common.entity.CountryEntity(
             id = "test_country",
             name = "Testland",
             stability = 0.8f,
@@ -162,7 +162,7 @@ class E2EFlowTest {
 
         // 4. Persist to database
         val eventEntities = events.map { event ->
-            com.cascadesim.core.db.entity.EventEntity(
+            com.cascadesim.common.entity.EventEntity(
                 id = event.id,
                 description = event.description,
                 severity = event.severity.name,

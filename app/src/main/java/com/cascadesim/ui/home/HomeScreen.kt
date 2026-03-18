@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cascadesim.MainActivityViewModel
+import com.cascadesim.common.model.WorldState
 import com.cascadesim.ui.model.CascadeLevel
 import com.cascadesim.ui.model.CountryUiModel
 import com.cascadesim.ui.model.EventUiModel
@@ -124,7 +125,7 @@ private fun HomeContent(
     cascadeLevel: CascadeLevel,
     countries: List<CountryUiModel>,
     recentEvents: List<EventUiModel>,
-    worldState: com.cascadesim.game.model.WorldState,
+    worldState: WorldState,
     onNavigateToDecisions: () -> Unit,
     onNavigateToEvents: () -> Unit
 ) {

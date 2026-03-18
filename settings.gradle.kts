@@ -18,3 +18,4 @@ rootProject.name = "CascadeSim"
 include(":app")
 include(":core")
 include(":game")
+include(":common")
