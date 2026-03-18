@@ -2,9 +2,9 @@
 
 package com.cascadesim.game.engine
 
-import com.cascadesim.core.db.entity.NpcEntity
-import com.cascadesim.game.model.Event
-import com.cascadesim.game.model.EventSeverity
+import com.cascadesim.common.entity.NpcEntity
+import com.cascadesim.common.model.Event
+import com.cascadesim.common.model.EventSeverity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -239,7 +239,7 @@ class NpcReactor {
  * Extension function to create Npc from entity data.
  * PHASE 4: Convenience method for converting from database entity
  */
-fun com.cascadesim.core.db.entity.NpcEntity.toNpc(traits: NpcTraits = NpcTraits()): Npc {
+fun NpcEntity.toNpc(traits: NpcTraits = NpcTraits()): Npc {
     return Npc(
         id = this.id,
         name = this.name,

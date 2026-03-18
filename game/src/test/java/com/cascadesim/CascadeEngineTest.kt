@@ -2,8 +2,9 @@
 
 package com.cascadesim.game.engine
 
-import com.cascadesim.game.model.Decision
-import com.cascadesim.game.model.DecisionType
+import com.cascadesim.common.model.Decision
+import com.cascadesim.common.model.DecisionType
+import com.cascadesim.common.model.EventSeverity
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -57,11 +58,11 @@ class CascadeEngineTest {
         )
         
         val events = engine.processDecision(decision)
-        
+
         assertTrue(events.isNotEmpty())
         // High impact should have at least one event with HIGH or higher severity
-        val hasHighSeverity = events.any { 
-            it.severity.ordinal >= com.cascadesim.game.model.EventSeverity.HIGH.ordinal 
+        val hasHighSeverity = events.any {
+            it.severity.ordinal >= EventSeverity.HIGH.ordinal
         }
         assertTrue("High impact decision should generate high severity event", hasHighSeverity)
     }
@@ -69,19 +70,19 @@ class CascadeEngineTest {
     @Test
     fun testProcessDecisionWithLowImpact() = runTest {
         engine.initialize()
-        
+
         val decision = Decision(
             id = "low_impact_decision",
             type = DecisionType.DIPLOMATIC,
             impactScore = 0.1f
         )
-        
+
         val events = engine.processDecision(decision)
-        
+
         assertTrue(events.isNotEmpty())
         // Low impact should have LOW or MEDIUM severity
-        val hasLowSeverity = events.any { 
-            it.severity.ordinal <= com.cascadesim.game.model.EventSeverity.MEDIUM.ordinal 
+        val hasLowSeverity = events.any {
+            it.severity.ordinal <= EventSeverity.MEDIUM.ordinal
         }
         assertTrue("Low impact decision should generate low severity event", hasLowSeverity)
     }
