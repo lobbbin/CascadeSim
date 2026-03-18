@@ -22,10 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.HapticFeedbackType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cascadesim.MainActivityViewModel
 import com.cascadesim.common.model.Decision
@@ -216,7 +218,7 @@ private fun InteractiveDecisionCard(
             detectHorizontalDragGestures(
                 onDragEnd = {
                     if (abs(offsetX) > 100f && enabled) {
-                        hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         onClick()
                     }
                     offsetX = 0f
@@ -423,7 +425,7 @@ private fun DecisionImpactPreviewDialog(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f)
@@ -433,7 +435,7 @@ private fun DecisionImpactPreviewDialog(
                     
                     Button(
                         onClick = {
-                            hapticFeedback.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             onConfirm()
                         },
                         modifier = Modifier.weight(1f),

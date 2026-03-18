@@ -164,27 +164,9 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
-    fun createCheckpoint(label: String) {
-        viewModelScope.launch {
-            worldRepository.createCheckpoint(label)
-        }
-    }
-
-    fun restoreCheckpoint(checkpointId: String) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Loading
-            val result = worldRepository.restoreCheckpoint(checkpointId)
-            when (result) {
-                is Result.Success -> {
-                    _uiState.value = UiState.Success(cascadeLevel = CascadeLevel.STABLE)
-                }
-                is Result.Error -> {
-                    _uiState.value = UiState.Error(result.message ?: "Failed to restore checkpoint")
-                }
-                is Result.Loading -> {}
-            }
-        }
-    }
+    // Checkpoint functionality temporarily disabled
+    // fun createCheckpoint(label: String) { ... }
+    // fun restoreCheckpoint(checkpointId: String) { ... }
 
     private fun calculateCascadeLevel(events: List<EventUiModel>): CascadeLevel {
         if (events.isEmpty()) return CascadeLevel.STABLE
