@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cascadesim.game.model.EventSeverity
-import com.cascadesim.game.model.UiEventNode
+import com.cascadesim.common.model.EventSeverity
+import com.cascadesim.common.model.UiEventNode
 import com.cascadesim.ui.theme.*
 import kotlinx.coroutines.delay
 

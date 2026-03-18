@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cascadesim.MainActivityViewModel
-import com.cascadesim.game.model.Decision
-import com.cascadesim.game.model.DecisionType
+import com.cascadesim.common.model.Decision
+import com.cascadesim.common.model.DecisionType
 import com.cascadesim.ui.model.UiState
 import com.cascadesim.ui.theme.*
 import kotlinx.coroutines.launch

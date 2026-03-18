@@ -4,14 +4,17 @@ package com.cascadesim
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cascadesim.common.entity.EventEntity
 import com.cascadesim.common.model.Decision
 import com.cascadesim.common.model.EventSeverity
 import com.cascadesim.common.model.WorldState
-import com.cascadesim.core.repository.WorldRepository
 import com.cascadesim.common.util.Result
+import com.cascadesim.core.repository.WorldRepository
+import com.cascadesim.game.engine.CascadeEngine
 import com.cascadesim.ui.model.CascadeLevel
 import com.cascadesim.ui.model.EventUiModel
 import com.cascadesim.ui.model.UiState
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +24,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    private val worldRepository: WorldRepository
+    private val worldRepository: WorldRepository,
+    private val cascadeEngine: CascadeEngine,
+    private val gson: Gson
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -34,7 +39,12 @@ class MainActivityViewModel @Inject constructor(
     private fun initializeSimulation() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            val result = worldRepository.initialize()
+            val result = runCatching {
+                cascadeEngine.initialize()
+                Result.Success(Unit)
+            }.getOrElse { e ->
+                Result.Error(e, "Failed to initialize simulation")
+            }
             when (result) {
                 is Result.Success -> {
                     _uiState.value = UiState.Success(cascadeLevel = CascadeLevel.STABLE)
@@ -49,7 +59,28 @@ class MainActivityViewModel @Inject constructor(
 
     fun onDecisionMade(decision: Decision) {
         viewModelScope.launch {
-            val result = worldRepository.processDecision(decision)
+            val result = runCatching {
+                val events = cascadeEngine.processDecision(decision)
+                
+                // Save events to database
+                val eventEntities = events.map { event ->
+                    EventEntity(
+                        id = event.id,
+                        description = event.description,
+                        severity = event.severity.name,
+                        chainId = event.chainId,
+                        sourceDecisionId = event.sourceDecisionId,
+                        timestamp = event.timestamp,
+                        affectedEntityIdsJson = gson.toJson(event.affectedEntityIds)
+                    )
+                }
+                worldRepository.saveEvents(eventEntities)
+                
+                Result.Success(events)
+            }.getOrElse { e ->
+                Result.Error(e, "Failed to process decision")
+            }
+            
             when (result) {
                 is Result.Success -> {
                     val events = result.data.map { event ->
@@ -82,7 +113,11 @@ class MainActivityViewModel @Inject constructor(
 
     fun onTick() {
         viewModelScope.launch {
-            val result = worldRepository.tick()
+            val result = runCatching {
+                cascadeEngine.tick()
+            }.getOrElse { e ->
+                Result.Error(e, "Tick failed")
+            }
             when (result) {
                 is Result.Success -> {
                     val currentSuccess = _uiState.value as? UiState.Success
@@ -103,15 +138,21 @@ class MainActivityViewModel @Inject constructor(
     fun onReset() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            val result = worldRepository.reset()
-            when (result) {
-                is Result.Success -> {
+            val repoResult = worldRepository.reset()
+            val engineResult = runCatching {
+                cascadeEngine.reset()
+                Result.Success(Unit)
+            }.getOrElse { e ->
+                Result.Error(e, "Failed to reset engine")
+            }
+            
+            when {
+                repoResult is Result.Error || engineResult is Result.Error -> {
+                    _uiState.value = UiState.Error("Reset failed")
+                }
+                else -> {
                     _uiState.value = UiState.Success(cascadeLevel = CascadeLevel.STABLE)
                 }
-                is Result.Error -> {
-                    _uiState.value = UiState.Error(result.message ?: "Reset failed")
-                }
-                is Result.Loading -> {}
             }
         }
     }
