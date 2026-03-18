@@ -11,6 +11,7 @@ import com.cascadesim.common.model.Decision
 import com.cascadesim.common.model.DecisionType
 import com.cascadesim.ui.model.UiState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DecisionScreen(
     onNavigateBack: () -> Unit,

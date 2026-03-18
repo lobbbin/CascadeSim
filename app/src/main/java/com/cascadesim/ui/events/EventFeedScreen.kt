@@ -12,6 +12,7 @@ import com.cascadesim.MainActivityViewModel
 import com.cascadesim.ui.model.EventUiModel
 import com.cascadesim.ui.model.UiState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventFeedScreen(
     onNavigateBack: () -> Unit,
