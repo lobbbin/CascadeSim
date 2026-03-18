@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.foundation.HapticFeedbackType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cascadesim.MainActivityViewModel
 import com.cascadesim.common.model.Decision
@@ -218,7 +217,7 @@ private fun InteractiveDecisionCard(
             detectHorizontalDragGestures(
                 onDragEnd = {
                     if (abs(offsetX) > 100f && enabled) {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        // Haptic feedback
                         onClick()
                     }
                     offsetX = 0f
@@ -425,7 +424,7 @@ private fun DecisionImpactPreviewDialog(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            // Haptic feedback
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f)
@@ -435,7 +434,7 @@ private fun DecisionImpactPreviewDialog(
                     
                     Button(
                         onClick = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            // Haptic feedback
                             onConfirm()
                         },
                         modifier = Modifier.weight(1f),

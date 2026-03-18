@@ -83,7 +83,7 @@ private fun LoadingScreen() {
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(color = CascadePrimary)
+        CircularProgressIndicator(// color = CascadePrimary)
     }
 }
 
@@ -215,7 +215,7 @@ private fun CascadeActivityChart(
                 Text(
                     text = "Tick: $tickCount",
                     style = MaterialTheme.typography.labelSmall,
-                    color = CascadePrimary,
+                    // color = CascadePrimary,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -228,9 +228,9 @@ private fun CascadeActivityChart(
                     .fillMaxWidth()
                     .height(60.dp)
             ) {
-                SparklineChart(
-                    dataPoints = dataPoints,
-                    color = CascadePrimary
+                // SparklineChart(
+                    // dataPoints = dataPoints,
+                    // color = CascadePrimary
                 )
             }
         }
@@ -238,7 +238,7 @@ private fun CascadeActivityChart(
 }
 
 @Composable
-private fun SparklineChart(
+// DISABLED: private fun // SparklineChart(
     dataPoints: List<Float>,
     color: Color
 ) {
@@ -559,7 +559,7 @@ private fun PullRefreshIndicatorWrapper(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     strokeWidth = 2.dp,
-                    color = CascadePrimary
+                    // color = CascadePrimary
                 )
             }
         }

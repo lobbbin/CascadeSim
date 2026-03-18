@@ -199,7 +199,7 @@ private fun AnimatedEventCard(event: EventUiModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .animateItemPlacement(),
+            // .animateItemPlacement(),
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),

@@ -12,12 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.StrokeCap
-import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalDensity
 import com.cascadesim.common.model.EventSeverity
 import com.cascadesim.common.model.UiEventNode
 import com.cascadesim.ui.theme.*
@@ -132,7 +130,7 @@ private fun EventChainNode(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
-                .scale(scale)
+                // .scale(scale)
                 .alpha(alpha),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
