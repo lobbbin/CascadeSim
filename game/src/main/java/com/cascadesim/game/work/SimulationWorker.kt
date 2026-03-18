@@ -65,7 +65,7 @@ class SimulationWorker @AssistedInject constructor(
     }
 
     private suspend fun generateBackgroundEvent(tickIndex: Int) {
-        val decisionTypes = listOf(
+        val decisionTypes: List<DecisionType> = listOf(
             DecisionType.DIPLOMATIC,
             DecisionType.ECONOMIC,
             DecisionType.SOCIAL,
