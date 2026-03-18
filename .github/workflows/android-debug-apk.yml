@@ -1,5 +1,6 @@
-# PHASE 5: GitHub Actions workflow for fast debug APK generation
+# PHASE 6: GitHub Actions workflow for fast debug APK generation
 # Optimized for ~3 minute build time with caching and parallel execution
+# FIX: Added Gradle setup to handle missing wrapper JAR
 
 name: Android Debug APK
 
@@ -13,7 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     
     steps:
     - name: Checkout Repository
@@ -26,13 +27,21 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.2'
+        cache-read-only: false
+
+    - name: Generate Gradle Wrapper (if missing)
+      run: |
+        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          echo "Gradle wrapper JAR missing, generating..."
+          gradle wrapper --gradle-version 8.2
+        fi
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-
-    - name: Gradle Cache
-      uses: gradle/gradle-build-action@v3
-      with:
-        cache-read-only: false
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug --no-daemon --stacktrace
