@@ -9,7 +9,7 @@ import androidx.work.WorkerParameters
 import com.cascadesim.common.entity.EventEntity
 import com.cascadesim.common.model.Decision
 import com.cascadesim.common.model.DecisionType
-import com.cascadesim.common.util.Result
+import com.cascadesim.common.util.Result as CommonResult
 import com.cascadesim.common.work.WorkConstants
 import com.cascadesim.core.db.dao.WorldDao
 import com.cascadesim.game.engine.CascadeEngine
@@ -18,6 +18,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 /**
  * Background worker that runs simulation ticks even when app is closed.
@@ -37,13 +38,13 @@ class SimulationWorker @AssistedInject constructor(
         private const val MAX_BACKGROUND_TICKS = 5
     }
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
+    override suspend fun doWork(): androidx.work.ListenableWorker.Result = withContext(Dispatchers.Default) {
         try {
             cascadeEngine.initialize()
 
             val ticksCompleted = (0 until MAX_BACKGROUND_TICKS).count { tick ->
                 val tickResult = cascadeEngine.tick()
-                if (tickResult is Result.Success) {
+                if (tickResult is CommonResult.Success) {
                     if (Math.random() < 0.4f) {
                         generateBackgroundEvent(tick)
                     }
@@ -54,13 +55,13 @@ class SimulationWorker @AssistedInject constructor(
             }
 
             if (ticksCompleted > 0) {
-                Result.success()
+                androidx.work.ListenableWorker.Result.success()
             } else {
-                Result.retry()
+                androidx.work.ListenableWorker.Result.retry()
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure()
+            androidx.work.ListenableWorker.Result.failure()
         }
     }
 
@@ -74,7 +75,7 @@ class SimulationWorker @AssistedInject constructor(
 
         val randomDecision = Decision(
             id = "background_event_${System.currentTimeMillis()}_$tickIndex",
-            type = decisionTypes.random(),
+            type = decisionTypes[Random.nextInt(decisionTypes.size)],
             impactScore = (0.2f..0.6f).random(),
             targetEntityId = null,
             metadata = mapOf("source" to "background_simulation")
