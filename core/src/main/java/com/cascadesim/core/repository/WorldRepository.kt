@@ -2,12 +2,6 @@
 
 package com.cascadesim.core.repository
 
-import android.content.Context
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.cascadesim.common.entity.CountryEntity
 import com.cascadesim.common.entity.EventEntity
 import com.cascadesim.common.entity.NpcEntity
@@ -16,19 +10,16 @@ import com.cascadesim.common.model.Event
 import com.cascadesim.common.model.EventSeverity
 import com.cascadesim.common.model.WorldState
 import com.cascadesim.common.util.Result
-import com.cascadesim.common.work.WorkConstants
 import com.cascadesim.core.db.dao.WorldDao
 import com.cascadesim.game.engine.CascadeEngine
 import com.cascadesim.game.engine.EventSink
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
