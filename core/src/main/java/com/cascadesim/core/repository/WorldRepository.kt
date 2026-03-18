@@ -17,7 +17,7 @@ import com.cascadesim.common.model.EventSeverity
 import com.cascadesim.common.model.WorldState
 import com.cascadesim.common.util.Result
 import com.cascadesim.core.db.dao.WorldDao
-import com.cascadesim.core.work.SimulationWorker
+import com.cascadesim.game.work.SimulationWorker
 import com.cascadesim.game.engine.CascadeEngine
 import com.cascadesim.game.engine.EventSink
 import com.google.gson.Gson

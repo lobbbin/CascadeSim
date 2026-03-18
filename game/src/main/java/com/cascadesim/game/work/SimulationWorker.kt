@@ -1,17 +1,17 @@
 // PHASE 6: Background simulation worker using WorkManager
 
-package com.cascadesim.core.work
+package com.cascadesim.game.work
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.cascadesim.common.entity.EventEntity
+import com.cascadesim.common.model.Decision
+import com.cascadesim.common.model.DecisionType
+import com.cascadesim.common.util.Result
 import com.cascadesim.core.db.dao.WorldDao
-import com.cascadesim.core.db.entity.EventEntity
 import com.cascadesim.game.engine.CascadeEngine
-import com.cascadesim.game.model.Decision
-import com.cascadesim.game.model.DecisionType
-import com.cascadesim.game.model.EventSeverity
 import com.google.gson.Gson
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -38,15 +38,12 @@ class SimulationWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
         try {
-            // Initialize engine if needed
             cascadeEngine.initialize()
 
-            // Run multiple ticks to simulate passage of time
             val ticksCompleted = (0 until MAX_BACKGROUND_TICKS).count { tick ->
                 val tickResult = cascadeEngine.tick()
-                if (tickResult is com.cascadesim.core.util.Result.Success) {
-                    // Generate procedural background events occasionally
-                    if (Math.random() < 0.4) { // 40% chance of event per tick
+                if (tickResult is Result.Success) {
+                    if (Math.random() < 0.4f) {
                         generateBackgroundEvent(tick)
                     }
                     true
@@ -66,10 +63,6 @@ class SimulationWorker @AssistedInject constructor(
         }
     }
 
-    /**
-     * Generates a procedural background event.
-     * PHASE 6: Simulates events happening while user is away
-     */
     private suspend fun generateBackgroundEvent(tickIndex: Int) {
         val decisionTypes = listOf(
             DecisionType.DIPLOMATIC,
@@ -81,14 +74,13 @@ class SimulationWorker @AssistedInject constructor(
         val randomDecision = Decision(
             id = "background_event_${System.currentTimeMillis()}_$tickIndex",
             type = decisionTypes.random(),
-            impactScore = (0.2f..0.6f).random(), // Lower impact for background events
+            impactScore = (0.2f..0.6f).random(),
             targetEntityId = null,
             metadata = mapOf("source" to "background_simulation")
         )
 
         val events = cascadeEngine.processDecision(randomDecision)
 
-        // Persist events with background flag
         val eventEntities = events.map { event ->
             EventEntity(
                 id = event.id,
