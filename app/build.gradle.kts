@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.cascadesim"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0-alpha"
@@ -20,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            applicationIdSuffix = ""
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -27,10 +31,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-        debug {
-            isMinifyEnabled = false
-            applicationIdSuffix = ".debug"
         }
     }
 
